@@ -15,10 +15,11 @@ admin_route = Blueprint('admin', __name__)
 @admin_route.route('/')
 def lista_lotes():
     pass
-    return render_template('index.html')
+    return render_template('lotes.html')
 
 @admin_route.route('/new', methods=['POST'])
 def cadastro_lotes():
+    render_template('lote_form.html')
     pass
 
 @admin_route.route('/<string:lote_id>')
@@ -31,6 +32,7 @@ def deletar_lote():
 
 @admin_route.route('/<string:lote_id>/<string:serial_id>')
 def obter_pci():
+    return render_template('detalhe_lote.html')
     pass
 
 @admin_route.route('/<string:lote_id>/<string:serial_id>/edit', methods=['PUT'])

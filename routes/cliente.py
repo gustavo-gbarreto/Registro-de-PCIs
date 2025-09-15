@@ -11,11 +11,13 @@ cliente_route = Blueprint('cliente', __name__)
 @cliente_route.route('/')
 def lista_lotes():
     pass
-    return render_template('index.html')
+    return render_template('lotes.html')
 
 @cliente_route.route('/<string:lote_id>')
 def obter_lote(lote_id):
+    return { 'lote especifico x'}
     pass
+
 
 @cliente_route.route('/<string:lote_id>/<string:serial_id>')
 def obter_pci():
