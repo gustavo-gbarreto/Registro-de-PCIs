@@ -21,23 +21,23 @@ def lista_lotes():
 def cadastro_lotes():
     pass
 
-@admin_route.route('/<char:lote_id>')
+@admin_route.route('/<string:lote_id>')
 def obter_lote():
     pass
 
-@admin_route.route('/<char:lote_id>', methods=['DELETE'])
+@admin_route.route('/<string:lote_id>', methods=['DELETE'])
 def deletar_lote():
     pass
 
-@admin_route.route('/<char:lote_id>/<char:serial_id>')
+@admin_route.route('/<string:lote_id>/<string:serial_id>')
 def obter_pci():
     pass
 
-@admin_route.route('/<char:lote_id>/<char:serial_id>/edit', methods=['PUT'])
+@admin_route.route('/<string:lote_id>/<string:serial_id>/edit', methods=['PUT'])
 def editar_pci():
     pass
 
-@admin_route.route('/<char:lote_id>/<char:serial_id>/delete', methods=['DELETE'])
+@admin_route.route('/<string:lote_id>/<string:serial_id>/delete', methods=['DELETE'])
 def deletar_pci():
     pass
 

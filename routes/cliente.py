@@ -13,11 +13,11 @@ def lista_lotes():
     pass
     return render_template('index.html')
 
-@cliente_route.route('/<char:lote_id>')
-def obter_lote():
+@cliente_route.route('/<string:lote_id>')
+def obter_lote(lote_id):
     pass
 
-@cliente_route.route('/<char:lote_id>/<char:serial_id>')
+@cliente_route.route('/<string:lote_id>/<string:serial_id>')
 def obter_pci():
     pass
 
