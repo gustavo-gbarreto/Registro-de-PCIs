@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template
+from database.PCI_list import PCI
 
 cliente_route = Blueprint('cliente', __name__)
 
@@ -11,7 +12,7 @@ cliente_route = Blueprint('cliente', __name__)
 @cliente_route.route('/')
 def lista_lotes():
     pass
-    return render_template('lotes.html')
+    return render_template('lotes.html', PCI=PCI)
 
 @cliente_route.route('/<string:lote_id>')
 def obter_lote(lote_id):

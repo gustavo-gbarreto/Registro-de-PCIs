@@ -1,4 +1,7 @@
-from flask import Blueprint, render_template
+from flask import Flask, Blueprint, render_template
+from database.PCI_list import PCI
+
+app = Flask(__name__)
 
 admin_route = Blueprint('admin', __name__)
 
@@ -12,9 +15,12 @@ admin_route = Blueprint('admin', __name__)
  -/admin/lote_id/serial_id/delete (DELETE) - deletar uma PCI específica(precisa de permissão especial)
 """
 
-@admin_route.route('/')
+@app.route('/cliente')
 def lista_lotes():
-    pass
+    return render_template('lotes.html', pci_list=PCI)
+
+@admin_route.route('/')
+def lista_lotes_admin():
     return render_template('lotes.html')
 
 @admin_route.route('/new', methods=['POST'])
@@ -43,5 +49,5 @@ def editar_pci():
 def deletar_pci():
     pass
 
-
-    return render_template('index.html')
+if __name__ == '__main__':
+    app.run(debug=True)
