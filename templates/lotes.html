@@ -22,14 +22,15 @@
   <table>
     <thead>
       <tr>
-        <th scope="col">Lote ID</th>
-        <th scope="col">Serial Number</th>
-        <th scope="col">Data de Montagem</th>
-        <th scope="col">Resultado do Teste</th>
-        <th scope="col">Técnico do Teste</th>
-        <th scope="col">Retrabalho</th>
-        <th scope="col">Técnico do Retrabalho</th>
-        <th scope="col">Observações</th>
+        <td>{{ item['Item'] }}</td>
+        <td>{{ item['Lote ID'] }}</td>
+        <td>{{ item['Serial Number'] }}</td>
+        <td>{{ item['Data de Montagem'] }}</td>
+        <td>{{ item['Resultado do Teste'] }}</td>
+        <td>{{ item['técnico do teste'] }}</td>
+        <td>{{ item['Retrabalho'] }}</td>
+        <td>{{ item['Técnico do Retrabalho'] }}</td>
+        <td>{{ item['Observações'] }}</td>
       </tr>
     </thead>
     <tbody>
