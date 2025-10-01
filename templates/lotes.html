@@ -1,49 +1,51 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de PCIs</title>
   <style>
     table {
-      border-collapse: collapse; /* Faz as bordas se fundirem */
-      width: 100%; /* Ajusta a largura da tabela */
-      border: 1px solid black; /* Adiciona uma borda contínua à tabela */
+      border-collapse: collapse;
+      width: 100%;
+      border: 1px solid black;
     }
     th, td {
-      text-align: center; /* Centraliza o texto nas células */
-      border: 1px solid black; /* Adiciona bordas às células */
-      padding: 8px; /* Adiciona espaçamento interno às células */
+      text-align: center;
+      border: 1px solid black;
+      padding: 8px;
     }
   </style>
 </head>
 <body>
   <h1>Lista de PCIs</h1>
+
   <table>
     <thead>
       <tr>
-        <td>{{ item['Item'] }}</td>
-        <td>{{ item['Lote ID'] }}</td>
-        <td>{{ item['Serial Number'] }}</td>
-        <td>{{ item['Data de Montagem'] }}</td>
-        <td>{{ item['Resultado do Teste'] }}</td>
-        <td>{{ item['técnico do teste'] }}</td>
-        <td>{{ item['Retrabalho'] }}</td>
-        <td>{{ item['Técnico do Retrabalho'] }}</td>
-        <td>{{ item['Observações'] }}</td>
+        <th>Item</th>
+        <th>Lote ID</th>
+        <th>Serial Number</th>
+        <th>Data de Montagem</th>
+        <th>Resultado do Teste</th>
+        <th>Técnico do Teste</th>
+        <th>Retrabalho</th>
+        <th>Técnico do Retrabalho</th>
+        <th>Observações</th>
       </tr>
     </thead>
     <tbody>
-      {% for item in PCI_list %}
+      {% for id, dados in pci_list.items() %}
       <tr>
-        <td>{{ item['lote id'] }}</td>
-        <td>{{ item['Serial_Number'] }}</td>
-        <td>{{ item['Montada em:'] }}</td>
-        <td>{{ item['test. result.:'] }}</td>
-        <td>{{ item['tec. teste'] }}</td>
-        <td>{{ item['retrabalho'] }}</td>
-        <td>{{ item['tèc. retrabalho'] }}</td>
-        <td>{{ item['observações'] }}</td>
+          <td>{{ id }}</td>
+          <td>{{ dados.Lote_ID }}</td>
+          <td>{{ dados.Serial_Number }}</td>
+          <td>{{ dados.Data_de_Montagem }}</td>
+          <td>{{ dados.Resultado_do_Teste }}</td>
+          <td>{{ dados.tecnico_do_teste }}</td>
+          <td>{{ dados.Retrabalho }}</td>
+          <td>{{ dados.Tecnico_do_Retrabalho }}</td>
+          <td>{{ dados.Observacoes }}</td>
       </tr>
       {% endfor %}
     </tbody>
