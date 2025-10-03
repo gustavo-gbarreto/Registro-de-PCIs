@@ -1,5 +1,4 @@
 from flask import Flask
-from database.PCI_list import PCI
 from routes.home import home_route
 from routes.cliente import cliente_route
 from routes.admin import admin_route
