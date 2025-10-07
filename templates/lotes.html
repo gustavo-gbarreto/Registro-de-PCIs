@@ -5,15 +5,94 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Lista de PCIs</title>
   <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 20px;
+      background-color: #f4f7f6;
+    }
+    h1 {
+      color: #333;
+    }
     table {
       border-collapse: collapse;
       width: 100%;
-      border: 1px solid black;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 3px rgba(0,0,0,0.1);
     }
     th, td {
+      text-align: left;
+      border: 1px solid #ddd;
+      padding: 12px;
+    }
+    th {
+      background-color: #007bff;
+      color: white;
       text-align: center;
-      border: 1px solid black;
-      padding: 8px;
+    }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
+    td:first-child, td:last-child {
+        text-align: center;
+    }
+
+    /* --- CSS para o botão e o pop-up (Modal) --- */
+    .btn-detalhes {
+      padding: 6px 12px;
+      cursor: pointer;
+      border: none;
+      background-color: #28a745;
+      color: white;
+      border-radius: 4px;
+      font-weight: bold;
+    }
+    .btn-detalhes:hover {
+      background-color: #218838;
+    }
+
+    /* --- CORREÇÃO APLICADA AQUI --- */
+    .modal {
+      display: none; /* Começa oculto por padrão */
+      position: fixed; 
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      /* As propriedades de alinhamento abaixo funcionarão quando o JS ativar o 'display: flex' */
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal-conteudo {
+      background-color: #fefefe;
+      padding: 25px;
+      border: 1px solid #888;
+      width: 90%;
+      max-width: 600px;
+      border-radius: 8px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+      position: relative;
+    }
+    
+    .modal-conteudo h2 {
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+    }
+
+    .modal-conteudo p {
+        line-height: 1.6;
+    }
+
+    .fechar {
+      color: #aaa;
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      font-size: 28px;
+      font-weight: bold;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -29,9 +108,6 @@
         <th>Data de Montagem</th>
         <th>Resultado do Teste</th>
         <th>Técnico do Teste</th>
-        <!-- <th>Retrabalho</th> -->
-        <!-- <th>Técnico do Retrabalho</th> -->
-        <!-- <th>Observações</th> -->
         <th>Ações</th>
       </tr>
     </thead>
@@ -44,12 +120,65 @@
           <td>{{ dados.Data_de_Montagem }}</td>
           <td>{{ dados.Resultado_do_Teste }}</td>
           <td>{{ dados.tecnico_do_teste }}</td>
-          <!-- <td>{{ dados.Retrabalho }}</td> -->
-          <!-- <td>{{ dados.Tecnico_do_Retrabalho }}</td> -->
-          <!-- <td>{{ dados.Observacoes }}</td> -->
+          <td>
+            <button class="btn-detalhes" data-target="modal-{{ id }}">Ver Detalhes</button>
+          </td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
+
+  {% for id, dados in pci_list.items() %}
+<div id="modal-{{ id }}" class="modal">
+  <div class="modal-conteudo">
+    <span class="fechar">&times;</span>
+    <h2>Detalhes: {{ dados.Serial_Number }}</h2>
+    <p><strong>Lote ID:</strong> {{ dados.Lote_ID }}</p>
+    <hr>
+    <p><strong>Retrabalho:</strong> {{ dados.Retrabalho }}</p>
+    <p><strong>Técnico do Retrabalho:</strong> {{ dados.Tecnico_do_Retrabalho }}</p>
+    <p><strong>Observações:</strong> {{ dados.Observacoes }}</p>
+    
+    <div style="text-align: right; margin-top: 20px;">
+      <button 
+        style="background-color: #dc3545; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;"
+        c-delete="{{ url_for('admin.deletar_pci', lote_id=dados.Lote_ID, serial_id=id) }}"
+        c-reload-container="#pci-container"
+        onclick="this.closest('.modal').style.display = 'none';">
+        Deletar Item
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endfor %}
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Abre o modal
+      document.querySelectorAll('.btn-detalhes').forEach(button => {
+        button.addEventListener('click', () => {
+          const modalId = button.getAttribute('data-target');
+          // A mágica acontece aqui: mudamos de 'none' para 'flex'
+          document.getElementById(modalId).style.display = 'flex'; 
+        });
+      });
+
+      // Fecha o modal pelo 'X'
+      document.querySelectorAll('.fechar').forEach(button => {
+        button.addEventListener('click', () => {
+          button.closest('.modal').style.display = 'none';
+        });
+      });
+
+      // Fecha o modal clicando fora da caixa de conteúdo
+      window.addEventListener('click', event => {
+        if (event.target.classList.contains('modal')) {
+          event.target.style.display = 'none';
+        }
+      });
+    });
+  </script>
+
 </body>
 </html>

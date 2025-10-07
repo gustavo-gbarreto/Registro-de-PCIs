@@ -1,5 +1,6 @@
-from flask import Flask, Blueprint, render_template
+from flask import Flask, Blueprint, render_template, jsonify, request # Adicione jsonify e request
 from database.PCI_list import PCI
+
 
 app = Flask(__name__)
 
@@ -47,8 +48,16 @@ def editar_pci():
     pass
 
 @admin_route.route('/<string:lote_id>/<string:serial_id>/delete', methods=['DELETE'])
-def deletar_pci():
-    pass
+def deletar_pci(lote_id, serial_id): # Adicione os parâmetros recebidos
+    # Verifica se a chave (serial_id) existe no dicionário
+    if serial_id in PCI:
+        # Deleta o item do dicionário
+        del PCI[serial_id]
+        # Retorna uma resposta de sucesso em formato JSON
+        return jsonify({'success': True, 'message': 'PCI deletada com sucesso'}), 200
+    else:
+        # Se não encontrar, retorna um erro
+        return jsonify({'success': False, 'message': 'PCI não encontrada'}), 404
 
 if __name__ == '__main__':
     app.run(debug=True)
