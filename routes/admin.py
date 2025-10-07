@@ -21,7 +21,8 @@ def lista_lotes():
 
 @admin_route.route('/')
 def lista_lotes_admin():
-    return render_template('lotes.html', PCI_list=PCI)
+    return render_template('lotes.html', pci_list=PCI)
+    pass
 
 @admin_route.route('/new', methods=['POST'])
 def cadastro_lotes():
