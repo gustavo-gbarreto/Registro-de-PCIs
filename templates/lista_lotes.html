@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Gestão de Lotes{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Gestão de Lotes</h1>
+</div>
+
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
+<div class="card mb-4">
+    <div class="card-header">
+        <strong><i class="bi bi-upload me-2"></i>Criar Novo Lote a partir de um Ficheiro CSV</strong>
+    </div>
+    <div class="card-body">
+        <form action="{{ url_for('lotes.upload_lote') }}" method="POST" enctype="multipart/form-data">
+            <div class="input-group">
+                <input type="file" class="form-control" name="csv_file" id="csv_file" accept=".csv" required>
+                <button class="btn btn-primary" type="submit">Criar Lote</button>
+            </div>
+            <div class="form-text mt-2">
+                O nome do ficheiro CSV (ex: `lote_xyz.csv`) será usado para criar o novo lote (`lote_xyz.py`).
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+<h2 class="h4 mt-5">Lotes Existentes</h2>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Nome do Ficheiro do Lote</th>
+                <th>Data de Modificação</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lote in lotes %}
+            <tr>
+                <td><i class="bi bi-file-earmark-code me-2"></i>{{ lote.name }}</td>
+                <td>{{ lote.date }}</td>
+                <td>
+                    <a href="{{ url_for('lotes.detalhe_lote', lote_filename=lote.name) }}" class="btn btn-sm btn-info">
+                        <i class="bi bi-eye-fill me-1"></i>Ver Itens
+                    </a>
+                    
+                    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+                    <button class="btn btn-sm btn-danger"
+                            c-delete="{{ url_for('lotes.apagar_lote', lote_filename=lote.name) }}"
+                            c-redirect="{{ url_for('lotes.listar_lotes') }}"
+                            c-confirm="Tem a certeza que deseja apagar o lote '{{ lote.name }}'? Esta ação é irreversível.">
+                        <i class="bi bi-trash-fill me-1"></i>Apagar
+                    </button>
+                    {% endif %}
+                    </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="3" class="text-center">Nenhum lote adicional encontrado.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // É importante garantir que o cru.js seja inicializado nesta página
+    // para que o botão 'c-delete' funcione para o admin.
+    document.addEventListener('DOMContentLoaded', () => {
+        if (window.$C) {
+            $C();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do Lote: {{ filename }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Itens do Lote: <strong>{{ filename }}</strong></h1>
+    <a href="{{ url_for('lotes.listar_lotes') }}" class="btn btn-secondary">
+      <i class="bi bi-arrow-left-circle me-2"></i>Voltar para a Lista de Lotes
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID no Lote</th>
+                        {% if lote_data.values()|first %}
+                            {% for key in (lote_data.values()|first).keys() %}
+                            <th>{{ key.replace('_', ' ')|title }}</th>
+                            {% endfor %}
+                            {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item_id, item_dados in lote_data.items() %}
+                    <tr>
+                        <td class="text-center">{{ item_id }}</td>
+                        {% for value in item_dados.values() %}
+                        <td>{{ value }}</td>
+                        {% endfor %}
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="100" class="text-center">Este lote não contém itens.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
