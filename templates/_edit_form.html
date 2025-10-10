@@ -1,11 +1,10 @@
 <form 
   id="edit-form-{{ pci_id }}"
   action="{{ url_for('admin.editar_pci', serial_id=pci_id) }}" 
-  method="POST" >
+  method="POST"
+>
   <span class="fechar">&times;</span>
-  <h2>Editando Item: {{ pci_id }}</h2>
-  <hr>
-
+  <h2>Editando Item: {{ pci_id }}</h2><hr>
   <div class="mb-3">
     <label for="edit-resultado-teste-{{ pci_id }}" class="form-label"><b>Resultado do Teste</b></label>
     <select name="Resultado_do_Teste" id="edit-resultado-teste-{{ pci_id }}" class="form-select" required>
@@ -13,73 +12,19 @@
         <option value="Reprovada" {% if pci_dados.Resultado_do_Teste == 'Reprovada' %}selected{% endif %}>Reprovada</option>
     </select>
   </div>
-
   <div class="mb-3">
-    <label class="form-label" for="edit-retrabalho-{{ pci_id }}"><b>Retrabalho</b> <span id="edit-retrabalho-indicator-{{ pci_id }}" class="required-indicator">*</span></label>
+    <label class="form-label" for="edit-retrabalho-{{ pci_id }}"><b>Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
     <input type="text" name="Retrabalho" id="edit-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.Retrabalho }}">
   </div>
   <div class="mb-3">
-    <label class="form-label" for="edit-tecnico-retrabalho-{{ pci_id }}"><b>Técnico do Retrabalho</b> <span id="edit-tecnico-indicator-{{ pci_id }}" class="required-indicator">*</span></label>
+    <label class="form-label" for="edit-tecnico-retrabalho-{{ pci_id }}"><b>Técnico do Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
     <input type="text" name="Tecnico_do_Retrabalho" id="edit-tecnico-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.Tecnico_do_Retrabalho }}">
   </div>
-
   <div class="mb-3">
       <label for="edit-observacoes-{{ pci_id }}" class="form-label"><b>Observações</b></label>
       <textarea name="Observacoes" id="edit-observacoes-{{ pci_id }}" class="form-control">{{ pci_dados.Observacoes }}</textarea>
   </div>
-
   <div class="d-flex justify-content-end mt-4">
     <button type="submit" class="btn btn-primary">Salvar Alterações</button>
   </div>
 </form>
-
-<script>
-  (function() {
-    const pciId = '{{ pci_id }}';
-    const form = document.getElementById('edit-form-' + pciId);
-    const resultadoSelect = document.getElementById('edit-resultado-teste-' + pciId);
-    const retrabalhoInput = document.getElementById('edit-retrabalho-' + pciId);
-    const tecnicoRetrabalhoInput = document.getElementById('edit-tecnico-retrabalho-' + pciId);
-    const retrabalhoIndicator = document.getElementById('edit-retrabalho-indicator-' + pciId);
-    const tecnicoIndicator = document.getElementById('edit-tecnico-indicator-' + pciId);
-
-    function atualizarCamposEdicao() {
-      const isReprovado = resultadoSelect.value === 'Reprovada';
-      retrabalhoInput.required = isReprovado;
-      tecnicoRetrabalhoInput.required = isReprovado;
-      retrabalhoIndicator.style.display = isReprovado ? 'inline' : 'none';
-      tecnicoIndicator.style.display = isReprovado ? 'inline' : 'none';
-    }
-
-    if(resultadoSelect) {
-        resultadoSelect.addEventListener('change', atualizarCamposEdicao);
-        atualizarCamposEdicao();
-    }
-
-    if (form) {
-      form.addEventListener('submit', async function(event) {
-        event.preventDefault();
-
-        if (!form.checkValidity()) {
-          form.reportValidity();
-          return;
-        }
-
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData.entries());
-
-        const response = await fetch(form.action, {
-          method: 'PUT', // Envia como PUT
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-
-        if (response.ok) {
-          window.location.href = "{{ url_for('admin.lista_lotes_admin') }}";
-        } else {
-          alert('Ocorreu um erro ao salvar as alterações.');
-        }
-      });
-    }
-  })();
-</script>

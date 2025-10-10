@@ -1,10 +1,13 @@
+import csv
+import io
 from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for
 from database.PCI_list import PCI
 from flask_login import login_required, current_user
 from functools import wraps
 import json
 
-# Decorador que verifica se o utilizador tem a função 'admin'
+admin_route = Blueprint('admin', __name__)
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -13,8 +16,6 @@ def admin_required(f):
             return redirect(request.referrer or url_for('cliente.lista_lotes'))
         return f(*args, **kwargs)
     return decorated_function
-
-admin_route = Blueprint('admin', __name__)
 
 def salvar_dados_no_arquivo():
     with open('database/PCI_list.py', 'w', encoding='utf-8') as f:
@@ -27,28 +28,61 @@ def salvar_dados_no_arquivo():
 def lista_lotes_admin():
     return render_template('lotes.html', pci_list=PCI)
 
-# A FUNÇÃO COM O NOME CORRETO ESTÁ AQUI
 @admin_route.route('/new', methods=['POST'])
 @login_required
 @admin_required
 def cadastro_lotes():
     novo_item_dados = request.get_json()
     novo_serial_number = novo_item_dados.get('Serial_Number')
-
     for item in PCI.values():
         if item.get('Serial_Number') == novo_serial_number:
-            mensagem_erro = f'O Serial Number "{novo_serial_number}" já existe.'
-            return jsonify({'success': False, 'message': mensagem_erro}), 409
-
+            return jsonify({'success': False, 'message': f'O Serial Number "{novo_serial_number}" já existe.'}), 409
     if PCI:
         ultimo_id = max(int(k) for k in PCI.keys())
         novo_id = str(ultimo_id + 1)
-    else:
-        novo_id = '1'
-    
+    else: novo_id = '1'
     PCI[novo_id] = novo_item_dados
     salvar_dados_no_arquivo()
     return jsonify({'success': True, 'message': 'Novo item adicionado com sucesso'}), 200
+
+@admin_route.route('/upload_csv', methods=['POST'])
+@login_required
+@admin_required
+def upload_csv():
+    if 'csv_file' not in request.files or request.files['csv_file'].filename == '':
+        flash('Nenhum ficheiro selecionado.', 'warning')
+        return redirect(url_for('admin.lista_lotes_admin'))
+    file = request.files['csv_file']
+    if file and file.filename.endswith('.csv'):
+        try:
+            stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+            csv_reader = csv.DictReader(stream)
+            existing_serials = {item['Serial_Number'] for item in PCI.values()}
+            ultimo_id = max((int(k) for k in PCI.keys()), default=0)
+            novos_itens_count = 0
+            for row in csv_reader:
+                serial_number = row.get('Serial_Number')
+                if not serial_number or serial_number in existing_serials:
+                    flash(f'Item com Serial Number "{serial_number}" foi ignorado (em branco ou duplicado).', 'warning')
+                    continue
+                ultimo_id += 1; novo_id = str(ultimo_id)
+                PCI[novo_id] = {
+                    "Lote_ID": row.get("Lote_ID", ""),"Serial_Number": serial_number,
+                    "Data_de_Montagem": row.get("Data_de_Montagem", ""),"Resultado_do_Teste": row.get("Resultado_do_Teste", "Não Testado"),
+                    "tecnico_do_teste": row.get("tecnico_do_teste", "N/A"),"Retrabalho": row.get("Retrabalho", "Não"),
+                    "Tecnico_do_Retrabalho": row.get("Tecnico_do_Retrabalho", "N/A"),"Observacoes": row.get("Observacoes", "--")
+                }
+                existing_serials.add(serial_number)
+                novos_itens_count += 1
+            if novos_itens_count > 0:
+                salvar_dados_no_arquivo()
+                flash(f'{novos_itens_count} novos itens foram importados com sucesso!', 'success')
+            else: flash('Nenhum item novo foi importado. Verifique o seu ficheiro.', 'info')
+        except Exception as e: flash(f'Ocorreu um erro ao processar o ficheiro: {e}', 'danger')
+        return redirect(url_for('admin.lista_lotes_admin'))
+    else:
+        flash('Formato de ficheiro inválido. Por favor, envie um ficheiro .csv.', 'danger')
+        return redirect(url_for('admin.lista_lotes_admin'))
 
 @admin_route.route('/<string:serial_id>/edit-form')
 @login_required
