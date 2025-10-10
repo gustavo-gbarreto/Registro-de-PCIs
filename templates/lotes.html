@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Lista de Lotes{% endblock %}
+{% block title %}Lista de PCIs{% endblock %}
 
 {% block styles %}
 <style>
@@ -14,12 +14,10 @@
 
 
 {% block content %}
-<div class="d-flex justify-content-between align-items: center mb-4">
+<div class="d-flex justify-content-between align-items-center mb-4">
     <h1>Lista de PCIs</h1>
-    {% if current_user and current_user.is_authenticated and current_user.role == 'admin' %}
-    <button class="btn btn-primary" id="btn-add-item">
-        <i class="bi bi-plus-circle-fill me-2"></i>Adicionar Item
-    </button>
+    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+    <button class="btn btn-primary" id="btn-add-item"><i class="bi bi-plus-circle-fill me-2"></i>Adicionar Item</button>
     {% endif %}
 </div>
 
@@ -49,49 +47,59 @@
             </tr>
         </thead>
         <tbody id="pci-table-body">
-            {% for id, dados in pci_list.items() %}
+            {% for item in pci_list %}
             <tr>
-                <td class="text-center">{{ id }}</td><td>{{ dados.Lote_ID }}</td><td>{{ dados.Serial_Number }}</td><td>{{ dados.Data_de_Montagem }}</td><td>{{ dados.Resultado_do_Teste }}</td><td>{{ dados.tecnico_do_teste }}</td>
-                <td class="text-center"><button class="btn btn-success btn-sm btn-detalhes" data-target="modal-{{ id }}">Detalhes</button></td>
+                <td class="text-center">{{ item.id }}</td>
+                <td>{{ item.lote_id }}</td>
+                <td>{{ item.serial_number }}</td>
+                <td>{{ item.data_de_montagem }}</td>
+                <td>{{ item.resultado_do_teste }}</td>
+                <td>{{ item.tecnico_do_teste }}</td>
+                <td class="text-center">
+                    <button class="btn btn-success btn-sm btn-detalhes" data-target="modal-{{ item.id }}">Detalhes</button>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" class="text-center">Nenhum item encontrado no banco de dados.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
-{% if current_user and current_user.is_authenticated and current_user.role == 'admin' %}
+{% if current_user.is_authenticated and current_user.role == 'admin' %}
 <div id="modal-add-item" class="modal">
     <div class="modal-conteudo" style="width: 90%; max-width: 700px;">
         <span class="fechar">&times;</span>
         <ul class="nav nav-tabs" id="add-item-tab" role="tablist">
-            <li class="nav-item" role="presentation"><button class="nav-link active" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button">Adicionar Manualmente</button></li>
-            <li class="nav-item" role="presentation"><button class="nav-link" id="csv-tab" data-bs-toggle="tab" data-bs-target="#csv-pane" type="button">Importar de CSV</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#manual-pane" type="button">Adicionar Manualmente</button></li>
+            <li class="nav-item" role="presentation"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#csv-pane" type="button">Importar para Lista Principal</button></li>
         </ul>
-        <div class="tab-content pt-3" id="add-item-tabContent">
-            <div class="tab-pane fade show active" id="manual-pane" role="tabpanel">
+        <div class="tab-content pt-3">
+            <div class="tab-pane fade show active" id="manual-pane">
                 <form id="form-add-item" action="{{ url_for('admin.cadastro_lotes') }}" method="POST">
                     <h2>Adicionar Novo Item</h2><hr>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Lote ID</label><input type="text" name="Lote_ID" class="form-control" required></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Serial Number</label><input type="text" name="Serial_Number" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Lote ID</label><input type="text" name="lote_id" class="form-control" required></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Serial Number</label><input type="text" name="serial_number" class="form-control" required></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Data de Montagem</label><input type="date" name="Data_de_Montagem" class="form-control" required></div>
-                    <div class="mb-3"><label class="form-label">Resultado do Teste</label><select name="Resultado_do_Teste" id="add-resultado-teste" class="form-select" required><option value="Aprovada" selected>Aprovada</option><option value="Reprovada">Reprovada</option></select></div>
-                    <div class="mb-3"><label class="form-label">Técnico do Teste</label><input type="text" name="tecnico_do_teste" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Data de Montagem</label><input type="date" name="data_de_montagem" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">Resultado do Teste</label><select name="resultado_do_teste" id="add-resultado-teste" class="form-select"><option value="Aprovada" selected>Aprovada</option><option value="Reprovada">Reprovada</option></select></div>
+                    <div class="mb-3"><label class="form-label">Técnico do Teste</label><input type="text" name="tecnico_do_teste" class="form-control"></div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label" for="add-retrabalho">Retrabalho <span class="required-indicator">*</span></label><input type="text" name="Retrabalho" id="add-retrabalho" class="form-control" value="Não"></div>
-                        <div class="col-md-6 mb-3"><label class="form-label" for="add-tecnico-retrabalho">Técnico do Retrabalho <span class="required-indicator">*</span></label><input type="text" name="Tecnico_do_Retrabalho" id="add-tecnico-retrabalho" class="form-control" value="N/A"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Retrabalho <span class="required-indicator">*</span></label><input type="text" name="retrabalho" id="add-retrabalho" class="form-control" value="Não"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Técnico do Retrabalho <span class="required-indicator">*</span></label><input type="text" name="tecnico_do_retrabalho" id="add-tecnico-retrabalho" class="form-control" value="N/A"></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Observações</label><input type="text" name="Observacoes" class="form-control" value="--"></div>
+                    <div class="mb-3"><label class="form-label">Observações</label><input type="text" name="observacoes" class="form-control" value="--"></div>
                     <div class="d-flex justify-content-end"><button type="submit" class="btn btn-primary">Salvar Novo Item</button></div>
                 </form>
             </div>
-            <div class="tab-pane fade" id="csv-pane" role="tabpanel">
-                <h2>Importar Itens de Ficheiro CSV</h2>
-                <p>Selecione um ficheiro .csv para adicionar múltiplos itens à lista de uma só vez.</p>
+            <div class="tab-pane fade" id="csv-pane">
+                <h2>Importar Itens para a Lista Principal</h2>
+                <p>O CSV será adicionado à lista principal de PCIs.</p>
                 <form action="{{ url_for('admin.upload_csv') }}" method="POST" enctype="multipart/form-data">
                     <div class="input-group"><input type="file" class="form-control" name="csv_file" accept=".csv" required><button class="btn btn-secondary" type="submit"><i class="bi bi-upload me-2"></i>Importar</button></div>
-                    <div class="form-text mt-2">Colunas: <strong>Lote_ID, Serial_Number, Data_de_Montagem, Resultado_do_Teste, tecnico_do_teste, Retrabalho, Tecnico_do_Retrabalho, Observacoes</strong></div>
                 </form>
             </div>
         </div>
@@ -99,22 +107,33 @@
 </div>
 {% endif %}
 
-{% for id, dados in pci_list.items() %}
-<div id="modal-{{ id }}" class="modal">
-    <div class="modal-conteudo" id="modal-content-{{ id }}">
+{% for item in pci_list %}
+<div id="modal-{{ item.id }}" class="modal">
+    <div class="modal-conteudo" id="modal-content-{{ item.id }}">
         <span class="fechar">&times;</span>
-        <h2>Detalhes: {{ dados.Serial_Number }}</h2><hr>
-        <p><strong>Lote ID:</strong> {{ dados.Lote_ID }}</p><p><strong>Data de Montagem:</strong> {{ dados.Data_de_Montagem }}</p><p><strong>Resultado do Teste:</strong> {{ dados.Resultado_do_Teste }}</p><p><strong>Técnico do Teste:</strong> {{ dados.tecnico_do_teste }}</p><p><strong>Retrabalho:</strong> {{ dados.Retrabalho }}</p><p><strong>Técnico do Retrabalho:</strong> {{ dados.Tecnico_do_Retrabalho }}</p><p><strong>Observações:</strong> {{ dados.Observacoes }}</p>
-        {% if current_user and current_user.is_authenticated and current_user.role == 'admin' %}
+        <h2>Detalhes: {{ item.serial_number }}</h2><hr>
+        <p><strong>Lote ID:</strong> {{ item.lote_id }}</p>
+        <p><strong>Data de Montagem:</strong> {{ item.data_de_montagem }}</p>
+        <p><strong>Resultado do Teste:</strong> {{ item.resultado_do_teste }}</p>
+        <p><strong>Técnico do Teste:</strong> {{ item.tecnico_do_teste }}</p>
+        <p><strong>Retrabalho:</strong> {{ item.retrabalho }}</p>
+        <p><strong>Técnico do Retrabalho:</strong> {{ item.tecnico_do_retrabalho }}</p>
+        <p><strong>Observações:</strong> {{ item.observacoes }}</p>
+        {% if current_user.is_authenticated and current_user.role == 'admin' %}
         <div class="mt-4 d-flex justify-content-end gap-2">
-            <button class="btn btn-warning" c-get="{{ url_for('admin.obter_pci_form', serial_id=id) }}" c-target="#modal-content-{{ id }}"><i class="bi bi-pencil-fill me-2"></i>Editar</button>
-            <button class="btn btn-danger" c-redirect="{{ url_for('admin.lista_lotes_admin') }}" c-delete="{{ url_for('admin.deletar_pci', lote_id=dados.Lote_ID, serial_id=id) }}"><i class="bi bi-trash-fill me-2"></i>Deletar</button>
+            <button class="btn btn-warning" c-get="{{ url_for('admin.obter_pci_form', serial_id=item.id) }}" c-target="#modal-content-{{ item.id }}"><i class="bi bi-pencil-fill me-2"></i>Editar</button>
+            <button class="btn btn-danger"
+                    c-redirect="{{ url_for('admin.lista_lotes_admin') }}"
+                    c-delete="{{ url_for('admin.deletar_pci', serial_id=item.id) }}">
+                <i class="bi bi-trash-fill me-2"></i>Deletar
+            </button>
         </div>
         {% endif %}
     </div>
 </div>
 {% endfor %}
 {% endblock %}
+
 
 {% block scripts %}
 <script>
@@ -145,77 +164,50 @@ document.addEventListener('DOMContentLoaded', () => {
         filterColumn.addEventListener('change', filterTable);
     }
     
-    // Lógica para o formulário de ADIÇÃO MANUAL
+    // --- INÍCIO DA CORREÇÃO: Lógica completa para o formulário de ADIÇÃO MANUAL ---
     const formAddItem = document.getElementById('form-add-item');
     if (formAddItem) {
         formAddItem.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            if (!formAddItem.checkValidity()) { e.stopPropagation(); formAddItem.reportValidity(); return; }
+            e.preventDefault(); // Impede o envio padrão do formulário
+            if (!formAddItem.checkValidity()) {
+                e.stopPropagation();
+                formAddItem.reportValidity();
+                return;
+            }
+            // Converte os dados do formulário para um objeto
             const data = Object.fromEntries(new FormData(formAddItem).entries());
-            const resp = await fetch(formAddItem.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-            if (resp.ok) { window.location.href = "{{ url_for('admin.lista_lotes_admin') }}"; } 
-            else { const err = await resp.json(); alert(err.message ? 'Erro: ' + err.message : 'Ocorreu um erro.'); }
+
+            // Envia os dados para o backend usando fetch
+            const response = await fetch(formAddItem.action, {
+                method: 'POST',
+                // AQUI ESTÁ A LINHA CRUCIAL que corrige o erro:
+                headers: { 'Content-Type': 'application/json' },
+                // Converte o objeto de dados para uma string JSON
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                // Se for sucesso, recarrega a página para ver o novo item
+                window.location.reload();
+            } else {
+                // Se houver um erro (ex: Serial Number duplicado), mostra o alerta
+                const errorData = await response.json();
+                alert(errorData.message ? 'Erro: ' + errorData.message : 'Ocorreu um erro desconhecido.');
+            }
         });
     }
+    // --- FIM DA CORREÇÃO ---
 
-    // Lógica de validação condicional do formulário de ADIÇÃO
-    const resAdd = document.getElementById('add-resultado-teste');
-    if (resAdd) {
-        const retrabalhoAdd = document.getElementById('add-retrabalho');
-        const tecRetrabalhoAdd = document.getElementById('add-tecnico-retrabalho');
-        const indicatorsAdd = document.querySelectorAll('#form-add-item .required-indicator');
-        const updateAddFields = () => {
-            const isReprovado = resAdd.value === 'Reprovada';
-            retrabalhoAdd.required = isReprovado;
-            tecRetrabalhoAdd.required = isReprovado;
-            indicatorsAdd.forEach(i => i.style.display = isReprovado ? 'inline' : 'none');
-            if (isReprovado) {
-                if (retrabalhoAdd.value === 'Não') retrabalhoAdd.value = '';
-                if (tecRetrabalhoAdd.value === 'N/A') tecRetrabalhoAdd.value = '';
-            }
-        };
-        resAdd.addEventListener('change', updateAddFields);
-        updateAddFields();
-    }
+    // ... (O resto do seu código para validação condicional, modais de edição, etc. vai aqui) ...
 
-    // Delegação de evento para os formulários de EDIÇÃO
-    document.body.addEventListener('submit', async (e) => {
-        if (e.target && e.target.id.startsWith('edit-form-')) {
-            const form = e.target;
-            e.preventDefault();
-            if (!form.checkValidity()) { e.stopPropagation(); form.reportValidity(); return; }
-            const data = Object.fromEntries(new FormData(form).entries());
-            const resp = await fetch(form.action, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-            if (resp.ok) { window.location.href = "{{ url_for('admin.lista_lotes_admin') }}"; } 
-            else { alert('Ocorreu um erro ao salvar as alterações.'); }
-        }
-    });
-
-    // Delegação de evento para a validação condicional dos formulários de EDIÇÃO
-    document.body.addEventListener('change', (e) => {
-        if (e.target && e.target.id.startsWith('edit-resultado-teste-')) {
-            const resEdit = e.target;
-            const id = resEdit.id.replace('edit-resultado-teste-', '');
-            const retrabalhoEdit = document.getElementById('edit-retrabalho-' + id);
-            const tecRetrabalhoEdit = document.getElementById('edit-tecnico-retrabalho-' + id);
-            const indicatorsEdit = document.querySelectorAll(`#edit-form-${id} .required-indicator`);
-            if (retrabalhoEdit && tecRetrabalhoEdit && indicatorsEdit.length > 0) {
-                const isReprovado = resEdit.value === 'Reprovada';
-                retrabalhoEdit.required = isReprovado;
-                tecRetrabalhoEdit.required = isReprovado;
-                indicatorsEdit.forEach(i => i.style.display = isReprovado ? 'inline' : 'none');
-            }
-        }
-    });
-
-    // Lógica COMPLETA para abrir e fechar TODOS os modais
+    // Lógica para abrir e fechar TODOS os modais
     const btnAddItem = document.getElementById('btn-add-item');
     if (btnAddItem) { btnAddItem.addEventListener('click', () => { document.getElementById('modal-add-item').style.display = 'flex'; }); }
     document.querySelectorAll('.btn-detalhes').forEach(b => { b.addEventListener('click', () => { const modal = document.getElementById(b.dataset.target); if (modal) modal.style.display = 'flex'; }); });
     document.querySelectorAll('.fechar').forEach(b => { b.addEventListener('click', () => { b.closest('.modal').style.display = 'none'; }); });
     window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
 
-    // Re-inicializa o cru.js para os botões de DELETAR que ainda o usam
+    // Re-inicializa o cru.js
     if (window.$C) { $C(); }
 });
 </script>

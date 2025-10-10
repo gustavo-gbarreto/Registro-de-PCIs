@@ -1,10 +1,14 @@
 from flask import Blueprint, render_template
-from database.PCI_list import PCI
-from flask_login import login_required # Importe o decorador
+from models import PCI
+from flask_login import login_required
 
+# Cria o Blueprint para as rotas do cliente
 cliente_route = Blueprint('cliente', __name__)
 
 @cliente_route.route('/')
-@login_required # Adicione esta linha para proteger a rota
+@login_required
 def lista_lotes():
-    return render_template("lotes.html", pci_list=PCI)
+    # A indentação aqui é feita com 4 espaços
+    todos_os_itens = PCI.query.all()
+    # Esta linha também, alinhada com a anterior
+    return render_template("lotes.html", pci_list=todos_os_itens)
