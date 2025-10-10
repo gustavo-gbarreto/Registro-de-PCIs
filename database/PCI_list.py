@@ -7,7 +7,7 @@ PCI = {
         "tecnico_do_teste": "Gustavo Barreto",
         "Retrabalho": "",
         "Tecnico_do_Retrabalho": "N/A",
-        "Observacoes": "------"
+        "Observacoes": "teste 08:40"
     },
     "2": {
         "Lote_ID": "L01",
@@ -90,6 +90,16 @@ PCI = {
         "Observacoes": ""
     },
     "10": {
+        "Lote_ID": "OD02",
+        "Serial_Number": "OD02-NCB-Rev4-004-0725",
+        "Data_de_Montagem": "2025-07-28",
+        "Resultado_do_Teste": "reprovado",
+        "tecnico_do_teste": "Gustavo Barreto",
+        "Retrabalho": "Não",
+        "Tecnico_do_Retrabalho": "",
+        "Observacoes": ""
+    },
+    "11": {
         "Lote_ID": "OD02",
         "Serial_Number": "OD02-NCB-Rev4-007-0725",
         "Data_de_Montagem": "2025-07-28",
