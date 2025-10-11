@@ -1,30 +1,34 @@
-<form 
-  id="edit-form-{{ pci_id }}"
-  action="{{ url_for('admin.editar_pci', serial_id=pci_id) }}" 
-  method="POST"
->
-  <span class="fechar">&times;</span>
-  <h2>Editando Item: {{ pci_id }}</h2><hr>
-  <div class="mb-3">
-    <label for="edit-resultado-teste-{{ pci_id }}" class="form-label"><b>Resultado do Teste</b></label>
-    <select name="Resultado_do_Teste" id="edit-resultado-teste-{{ pci_id }}" class="form-select" required>
-        <option value="Aprovada" {% if pci_dados.Resultado_do_Teste == 'Aprovada' %}selected{% endif %}>Aprovada</option>
-        <option value="Reprovada" {% if pci_dados.Resultado_do_Teste == 'Reprovada' %}selected{% endif %}>Reprovada</option>
-    </select>
-  </div>
-  <div class="mb-3">
-    <label class="form-label" for="edit-retrabalho-{{ pci_id }}"><b>Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
-    <input type="text" name="Retrabalho" id="edit-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.Retrabalho }}">
-  </div>
-  <div class="mb-3">
-    <label class="form-label" for="edit-tecnico-retrabalho-{{ pci_id }}"><b>Técnico do Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
-    <input type="text" name="Tecnico_do_Retrabalho" id="edit-tecnico-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.Tecnico_do_Retrabalho }}">
-  </div>
-  <div class="mb-3">
-      <label for="edit-observacoes-{{ pci_id }}" class="form-label"><b>Observações</b></label>
-      <textarea name="Observacoes" id="edit-observacoes-{{ pci_id }}" class="form-control">{{ pci_dados.Observacoes }}</textarea>
-  </div>
-  <div class="d-flex justify-content-end mt-4">
-    <button type="submit" class="btn btn-primary">Salvar Alterações</button>
-  </div>
+<form id="edit-form-{{ pci_id }}"
+      action="{{ url_for('admin.editar_pci', serial_id=pci_id) }}" 
+      method="POST">
+      
+    <span class="fechar">&times;</span>
+    <h2>Editando Item: {{ pci_id }}</h2><hr>
+
+    <div class="mb-3">
+        <label for="edit-resultado-teste-{{ pci_id }}" class="form-label"><b>Resultado do Teste</b></label>
+        <select name="resultado_do_teste" id="edit-resultado-teste-{{ pci_id }}" class="form-select" required>
+            <option value="Aprovada" {% if pci_dados.resultado_do_teste == 'Aprovada' %}selected{% endif %}>Aprovada</option>
+            <option value="Reprovada" {% if pci_dados.resultado_do_teste == 'Reprovada' %}selected{% endif %}>Reprovada</option>
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="edit-retrabalho-{{ pci_id }}"><b>Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
+        <input type="text" name="retrabalho" id="edit-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.retrabalho }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label" for="edit-tecnico-retrabalho-{{ pci_id }}"><b>Técnico do Retrabalho</b> <span class="required-indicator edit-indicator">*</span></label>
+        <input type="text" name="tecnico_do_retrabalho" id="edit-tecnico-retrabalho-{{ pci_id }}" class="form-control" value="{{ pci_dados.tecnico_do_retrabalho }}">
+    </div>
+
+    <div class="mb-3">
+        <label for="edit-observacoes-{{ pci_id }}" class="form-label"><b>Observações</b></label>
+        <textarea name="observacoes" id="edit-observacoes-{{ pci_id }}" class="form-control">{{ pci_dados.observacoes }}</textarea>
+    </div>
+
+    <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+    </div>
 </form>

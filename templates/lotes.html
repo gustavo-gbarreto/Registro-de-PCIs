@@ -138,7 +138,7 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Lógica de Filtro
+    // Lógica de Filtro (funcional)
     const filterInput = document.getElementById('filter-input');
     const filterColumn = document.getElementById('filter-column');
     const tableBody = document.getElementById('pci-table-body');
@@ -164,50 +164,59 @@ document.addEventListener('DOMContentLoaded', () => {
         filterColumn.addEventListener('change', filterTable);
     }
     
-    // --- INÍCIO DA CORREÇÃO: Lógica completa para o formulário de ADIÇÃO MANUAL ---
+    // Lógica para o formulário de ADIÇÃO MANUAL (funcional)
     const formAddItem = document.getElementById('form-add-item');
     if (formAddItem) {
         formAddItem.addEventListener('submit', async (e) => {
-            e.preventDefault(); // Impede o envio padrão do formulário
-            if (!formAddItem.checkValidity()) {
+            e.preventDefault();
+            if (!formAddItem.checkValidity()) { e.stopPropagation(); formAddItem.reportValidity(); return; }
+            const data = Object.fromEntries(new FormData(formAddItem).entries());
+            const resp = await fetch(formAddItem.action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if (resp.ok) { window.location.reload(); } 
+            else { const err = await resp.json(); alert(err.message ? 'Erro: ' + err.message : 'Ocorreu um erro.'); }
+        });
+    }
+
+    // --- INÍCIO DA CORREÇÃO: Lógica completa para o formulário de EDIÇÃO ---
+    // Usamos 'delegação de evento' para "ouvir" por submissões no corpo da página
+    document.body.addEventListener('submit', async (e) => {
+        // Verificamos se o formulário submetido é um formulário de edição
+        if (e.target && e.target.id.startsWith('edit-form-')) {
+            const form = e.target;
+            e.preventDefault(); // Impede o envio padrão
+
+            if (!form.checkValidity()) {
                 e.stopPropagation();
-                formAddItem.reportValidity();
+                form.reportValidity();
                 return;
             }
-            // Converte os dados do formulário para um objeto
-            const data = Object.fromEntries(new FormData(formAddItem).entries());
+            
+            const data = Object.fromEntries(new FormData(form).entries());
 
-            // Envia os dados para o backend usando fetch
-            const response = await fetch(formAddItem.action, {
-                method: 'POST',
-                // AQUI ESTÁ A LINHA CRUCIAL que corrige o erro:
+            // Envia os dados para o backend usando o método 'PUT'
+            const response = await fetch(form.action, {
+                method: 'PUT', // <-- AQUI ESTÁ A CORREÇÃO CRUCIAL
                 headers: { 'Content-Type': 'application/json' },
-                // Converte o objeto de dados para uma string JSON
                 body: JSON.stringify(data)
             });
 
             if (response.ok) {
-                // Se for sucesso, recarrega a página para ver o novo item
-                window.location.reload();
+                window.location.reload(); // Recarrega a página para ver a alteração
             } else {
-                // Se houver um erro (ex: Serial Number duplicado), mostra o alerta
-                const errorData = await response.json();
-                alert(errorData.message ? 'Erro: ' + errorData.message : 'Ocorreu um erro desconhecido.');
+                alert('Ocorreu um erro ao salvar as alterações.');
             }
-        });
-    }
+        }
+    });
     // --- FIM DA CORREÇÃO ---
 
-    // ... (O resto do seu código para validação condicional, modais de edição, etc. vai aqui) ...
-
-    // Lógica para abrir e fechar TODOS os modais
+    // Lógica COMPLETA para abrir e fechar TODOS os modais (funcional)
     const btnAddItem = document.getElementById('btn-add-item');
     if (btnAddItem) { btnAddItem.addEventListener('click', () => { document.getElementById('modal-add-item').style.display = 'flex'; }); }
     document.querySelectorAll('.btn-detalhes').forEach(b => { b.addEventListener('click', () => { const modal = document.getElementById(b.dataset.target); if (modal) modal.style.display = 'flex'; }); });
     document.querySelectorAll('.fechar').forEach(b => { b.addEventListener('click', () => { b.closest('.modal').style.display = 'none'; }); });
     window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
 
-    // Re-inicializa o cru.js
+    // Re-inicializa o cru.js (para botões de DELETAR e EDITAR)
     if (window.$C) { $C(); }
 });
 </script>

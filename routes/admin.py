@@ -12,7 +12,7 @@ from models import PCI
 
 admin_route = Blueprint('admin', __name__)
 
-# O decorador e a função de salvar (que agora é obsoleta)
+
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -22,9 +22,7 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Esta função já não é necessária, pois o db.session.commit() faz o trabalho de salvar.
-# def salvar_dados_no_arquivo():
-#     ...
+
 
 @admin_route.route('/')
 @login_required
@@ -33,7 +31,6 @@ def lista_lotes_admin():
     todos_os_itens = PCI.query.all()
     return render_template('lotes.html', pci_list=todos_os_itens)
 
-# --- INÍCIO DA REATORAÇÃO: Rota de Cadastro Manual ---
 @admin_route.route('/new', methods=['POST'])
 @login_required
 @admin_required
@@ -150,15 +147,42 @@ def upload_csv():
 @login_required
 @admin_required
 def obter_pci_form(serial_id):
-    # (Esta função será refatorada no próximo passo)
-    pass 
+    # Busca o item no banco de dados pelo seu ID, ou retorna erro 404 se não encontrar
+    item_para_editar = PCI.query.get_or_404(serial_id)
+    # Renderiza o formulário, passando o objeto do item encontrado
+    return render_template('_edit_form.html', pci_dados=item_para_editar, pci_id=serial_id)
 
 @admin_route.route('/<int:serial_id>/edit', methods=['PUT'])
 @login_required
 @admin_required
 def editar_pci(serial_id):
-    # (Esta função será refatorada no próximo passo)
-    pass
+    # Busca o item que queremos atualizar
+    item_para_atualizar = PCI.query.get_or_404(serial_id)
+    # Pega os dados JSON enviados pelo formulário
+    data = request.get_json()
+
+    # --- INÍCIO DA CORREÇÃO ---
+    # Lógica antiga e incorreta foi removida.
+    # item_para_atualizar.resultado_do_teste = data.get('resultado_do_teste')
+    # ...
+
+    # Nova lógica: Itera sobre os dados recebidos e atualiza apenas os campos correspondentes.
+    # Isto garante que apenas os campos enviados pelo formulário serão alterados.
+    for key, value in data.items():
+        # setattr() é uma forma segura de definir um atributo num objeto dinamicamente.
+        # ex: setattr(item_para_atualizar, 'retrabalho', 'novo texto')
+        if hasattr(item_para_atualizar, key):
+            setattr(item_para_atualizar, key, value)
+    # --- FIM DA CORREÇÃO ---
+
+    try:
+        # Salva as alterações no banco de dados
+        db.session.commit()
+        return jsonify({'success': True, 'message': 'Item atualizado com sucesso'}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Erro ao atualizar: {e}'}), 500
+
 
 @admin_route.route('/<int:serial_id>/delete', methods=['DELETE'])
 @login_required
