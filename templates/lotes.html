@@ -84,14 +84,14 @@
                         <div class="col-md-6 mb-3"><label class="form-label">Lote ID</label><input type="text" name="lote_id" class="form-control" required></div>
                         <div class="col-md-6 mb-3"><label class="form-label">Serial Number</label><input type="text" name="serial_number" class="form-control" required></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Data de Montagem</label><input type="date" name="data_de_montagem" class="form-control"></div>
-                    <div class="mb-3"><label class="form-label">Resultado do Teste</label><select name="resultado_do_teste" id="add-resultado-teste" class="form-select"><option value="Aprovada" selected>Aprovada</option><option value="Reprovada">Reprovada</option></select></div>
-                    <div class="mb-3"><label class="form-label">Técnico do Teste</label><input type="text" name="tecnico_do_teste" class="form-control"></div>
+                    <div class="mb-3"><label class="form-label">Data de Montagem</label><input type="date" name="data_de_montagem" class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">Resultado do Teste</label><select name="resultado_do_teste" id="add-resultado-teste" class="form-select" required><option value="" disabled selected>Selecione...</option><option value="Aprovada">Aprovada</option><option value="Reprovada">Reprovada</option></select></div>
+                    <div class="mb-3"><label class="form-label">Técnico do Teste</label><input type="text" name="tecnico_do_teste" id="add-tecnico-do-teste" class="form-control"></div>
                     <div class="row">
-                        <div class="col-md-6 mb-3"><label class="form-label">Retrabalho <span class="required-indicator">*</span></label><input type="text" name="retrabalho" id="add-retrabalho" class="form-control" value="Não"></div>
-                        <div class="col-md-6 mb-3"><label class="form-label">Técnico do Retrabalho <span class="required-indicator">*</span></label><input type="text" name="tecnico_do_retrabalho" id="add-tecnico-retrabalho" class="form-control" value="N/A"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Retrabalho <span class="required-indicator add-indicator">*</span></label><input type="text" name="retrabalho" id="add-retrabalho" class="form-control"></div>
+                        <div class="col-md-6 mb-3"><label class="form-label">Técnico do Retrabalho <span class="required-indicator add-indicator">*</span></label><input type="text" name="tecnico_do_retrabalho" id="add-tecnico-retrabalho" class="form-control"></div>
                     </div>
-                    <div class="mb-3"><label class="form-label">Observações</label><input type="text" name="observacoes" class="form-control" value="--"></div>
+                    <div class="mb-3"><label class="form-label">Observações</label><textarea name="observacoes" class="form-control"></textarea></div>
                     <div class="d-flex justify-content-end"><button type="submit" class="btn btn-primary">Salvar Novo Item</button></div>
                 </form>
             </div>
@@ -138,33 +138,29 @@
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    // Lógica de Filtro (funcional)
+    // Lógica de Filtro
     const filterInput = document.getElementById('filter-input');
-    const filterColumn = document.getElementById('filter-column');
     const tableBody = document.getElementById('pci-table-body');
-    function filterTable() {
-        if (!filterInput || !filterColumn || !tableBody) return;
-        const query = filterInput.value.toUpperCase();
-        const columnIndex = parseInt(filterColumn.value, 10);
-        const rows = tableBody.getElementsByTagName('tr');
-        for (let i = 0; i < rows.length; i++) {
-            const cell = rows[i].getElementsByTagName('td')[columnIndex];
-            if (cell) {
-                const cellText = cell.textContent || cell.innerText;
-                if (cellText.toUpperCase().indexOf(query) > -1) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
+    const filterColumn = document.getElementById('filter-column');
+    if (filterInput) {
+        const filterTable = () => {
+            const query = filterInput.value.toUpperCase();
+            const columnIndex = parseInt(filterColumn.value, 10);
+            const rows = tableBody.getElementsByTagName('tr');
+            for (let i = 0; i < rows.length; i++) {
+                const cell = rows[i].getElementsByTagName('td')[columnIndex];
+                if (cell) {
+                    const cellText = cell.textContent || cell.innerText;
+                    if (cellText.toUpperCase().indexOf(query) > -1) rows[i].style.display = "";
+                    else rows[i].style.display = "none";
                 }
             }
-        }
-    }
-    if (filterInput) {
+        };
         filterInput.addEventListener('keyup', filterTable);
         filterColumn.addEventListener('change', filterTable);
     }
     
-    // Lógica para o formulário de ADIÇÃO MANUAL (funcional)
+    // Submissão do formulário de ADIÇÃO MANUAL
     const formAddItem = document.getElementById('form-add-item');
     if (formAddItem) {
         formAddItem.addEventListener('submit', async (e) => {
@@ -177,46 +173,58 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- INÍCIO DA CORREÇÃO: Lógica completa para o formulário de EDIÇÃO ---
-    // Usamos 'delegação de evento' para "ouvir" por submissões no corpo da página
+    // Submissão dos formulários de EDIÇÃO (via delegação de evento)
     document.body.addEventListener('submit', async (e) => {
-        // Verificamos se o formulário submetido é um formulário de edição
         if (e.target && e.target.id.startsWith('edit-form-')) {
             const form = e.target;
-            e.preventDefault(); // Impede o envio padrão
-
-            if (!form.checkValidity()) {
-                e.stopPropagation();
-                form.reportValidity();
-                return;
-            }
-            
+            e.preventDefault();
+            if (!form.checkValidity()) { e.stopPropagation(); form.reportValidity(); return; }
             const data = Object.fromEntries(new FormData(form).entries());
-
-            // Envia os dados para o backend usando o método 'PUT'
-            const response = await fetch(form.action, {
-                method: 'PUT', // <-- AQUI ESTÁ A CORREÇÃO CRUCIAL
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                window.location.reload(); // Recarrega a página para ver a alteração
-            } else {
-                alert('Ocorreu um erro ao salvar as alterações.');
-            }
+            const resp = await fetch(form.action, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if (resp.ok) { window.location.reload(); } 
+            else { const err = await resp.json(); alert(err.message ? 'Erro: ' + err.message : 'Ocorreu um erro ao salvar.');}
         }
     });
-    // --- FIM DA CORREÇÃO ---
 
-    // Lógica COMPLETA para abrir e fechar TODOS os modais (funcional)
+    // VALIDAÇÃO CONDICIONAL para formulário de ADIÇÃO
+    const addResultadoSelect = document.getElementById('add-resultado-teste');
+    if (addResultadoSelect) {
+        addResultadoSelect.addEventListener('change', (e) => {
+            const selectedValue = e.target.value;
+            const isReprovado = selectedValue === 'Reprovada';
+            const isAprovado = selectedValue === 'Aprovada';
+
+            // Regra para Aprovado
+            document.getElementById('add-tecnico-do-teste').required = isAprovado;
+
+            // Regra para Reprovado
+            document.getElementById('add-retrabalho').required = isReprovado;
+            document.getElementById('add-tecnico-retrabalho').required = isReprovado;
+            document.querySelectorAll('.add-indicator').forEach(el => el.style.display = isReprovado ? 'inline' : 'none');
+        });
+    }
+
+    // VALIDAÇÃO CONDICIONAL para formulários de EDIÇÃO (via delegação de evento)
+    document.body.addEventListener('change', (e) => {
+        if (e.target && e.target.id.startsWith('edit-resultado-teste-')) {
+            const select = e.target;
+            const form = select.closest('form');
+            if (!form) return;
+            const isReprovado = select.value === 'Reprovada';
+            form.querySelector('[name="retrabalho"]').required = isReprovado;
+            form.querySelector('[name="tecnico_do_retrabalho"]').required = isReprovado;
+            form.querySelectorAll('.required-indicator').forEach(el => el.style.display = isReprovado ? 'inline' : 'none');
+        }
+    });
+
+    // Lógica para abrir e fechar TODOS os modais
     const btnAddItem = document.getElementById('btn-add-item');
     if (btnAddItem) { btnAddItem.addEventListener('click', () => { document.getElementById('modal-add-item').style.display = 'flex'; }); }
     document.querySelectorAll('.btn-detalhes').forEach(b => { b.addEventListener('click', () => { const modal = document.getElementById(b.dataset.target); if (modal) modal.style.display = 'flex'; }); });
     document.querySelectorAll('.fechar').forEach(b => { b.addEventListener('click', () => { b.closest('.modal').style.display = 'none'; }); });
     window.addEventListener('click', (e) => { if (e.target.classList.contains('modal')) e.target.style.display = 'none'; });
 
-    // Re-inicializa o cru.js (para botões de DELETAR e EDITAR)
+    // Re-inicializa o cru.js
     if (window.$C) { $C(); }
 });
 </script>

@@ -4,14 +4,12 @@ from datetime import datetime
 from flask import Blueprint, render_template, jsonify, request, flash, redirect, url_for
 from flask_login import login_required, current_user
 from functools import wraps
-import json
 
 # Importações para o banco de dados
 from extensions import db
 from models import PCI
 
 admin_route = Blueprint('admin', __name__)
-
 
 def admin_required(f):
     @wraps(f)
@@ -22,33 +20,38 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-
+# --- ROTA DE LEITURA (Read) ---
 @admin_route.route('/')
 @login_required
 @admin_required
 def lista_lotes_admin():
-    todos_os_itens = PCI.query.all()
+    # Busca todos os itens da tabela PCI, ordenados pelo ID
+    todos_os_itens = PCI.query.order_by(PCI.id).all()
     return render_template('lotes.html', pci_list=todos_os_itens)
 
+# --- ROTAS DE CRIAÇÃO (Create) ---
 @admin_route.route('/new', methods=['POST'])
 @login_required
 @admin_required
 def cadastro_lotes():
     data = request.get_json()
-    serial_number = data.get('serial_number')
+    
+    # Validação de campos obrigatórios no backend
+    required_fields = ['lote_id', 'serial_number', 'data_de_montagem', 'resultado_do_teste']
+    for field in required_fields:
+        if not data.get(field):
+            return jsonify({'success': False, 'message': f'O campo obrigatório "{field}" está em falta.'}), 400
 
-    # Validação: Verifica se o Serial Number já existe no banco de dados
+    if data.get('resultado_do_teste') == 'Aprovada' and not data.get('tecnico_do_teste'):
+        return jsonify({'success': False, 'message': 'Para itens aprovados, o campo "Técnico do Teste" é obrigatório.'}), 400
+
+
+    serial_number = data.get('serial_number')
     if PCI.query.filter_by(serial_number=serial_number).first():
         return jsonify({'success': False, 'message': f'O Serial Number "{serial_number}" já existe.'}), 409
 
     try:
-        # Converte a data de string para objeto date, se ela existir
-        data_montagem = None
-        if data.get('data_de_montagem'):
-            data_montagem = datetime.strptime(data.get('data_de_montagem'), '%Y-%m-%d').date()
-
-        # Cria um novo objeto PCI com os dados do formulário
+        data_montagem = datetime.strptime(data.get('data_de_montagem'), '%Y-%m-%d').date()
         novo_item = PCI(
             lote_id=data.get('lote_id'),
             serial_number=serial_number,
@@ -59,19 +62,13 @@ def cadastro_lotes():
             tecnico_do_retrabalho=data.get('tecnico_do_retrabalho'),
             observacoes=data.get('observacoes')
         )
-
-        # Adiciona o novo item à sessão e salva no banco de dados
         db.session.add(novo_item)
         db.session.commit()
-        
         return jsonify({'success': True, 'message': 'Novo item adicionado com sucesso'}), 200
     except Exception as e:
-        db.session.rollback() # Desfaz a transação em caso de erro
+        db.session.rollback()
         return jsonify({'success': False, 'message': f'Erro ao salvar no banco de dados: {e}'}), 500
-# --- FIM DA REATORAÇÃO ---
 
-
-# --- INÍCIO DA REATORAÇÃO: Rota de Upload de CSV ---
 @admin_route.route('/upload_csv', methods=['POST'])
 @login_required
 @admin_required
@@ -81,117 +78,96 @@ def upload_csv():
         return redirect(url_for('admin.lista_lotes_admin'))
 
     file = request.files['csv_file']
-
-    if file and file.filename.endswith('.csv'):
-        try:
-            # Busca todos os serial numbers existentes no DB de uma só vez para otimização
-            existing_serials = {p.serial_number for p in PCI.query.all()}
-            
-            stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
-            csv_reader = csv.DictReader(stream)
-            
-            novos_itens_count = 0
-            for row in csv_reader:
-                serial_number = row.get('serial_number') or row.get('Serial_Number')
-                
-                # Validação: ignora se não tiver serial number ou se for duplicado
-                if not serial_number or serial_number in existing_serials:
-                    flash(f'Item com Serial Number "{serial_number}" foi ignorado (em branco ou duplicado).', 'warning')
-                    continue
-                
-                data_montagem = None
-                if row.get('data_de_montagem') or row.get('Data_de_Montagem'):
-                    data_str = row.get('data_de_montagem') or row.get('Data_de_Montagem')
-                    # Tenta múltiplos formatos de data comuns
-                    for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
-                        try:
-                            data_montagem = datetime.strptime(data_str, fmt).date()
-                            break
-                        except ValueError:
-                            pass
-                
-                novo_item = PCI(
-                    lote_id=row.get('lote_id') or row.get('Lote_ID'),
-                    serial_number=serial_number,
-                    data_de_montagem=data_montagem,
-                    resultado_do_teste=row.get('resultado_do_teste') or row.get('Resultado_do_Teste'),
-                    tecnico_do_teste=row.get('tecnico_do_teste') or row.get('tecnico_do_teste'),
-                    retrabalho=row.get('retrabalho') or row.get('Retrabalho', 'Não'),
-                    tecnico_do_retrabalho=row.get('tecnico_do_retrabalho') or row.get('Tecnico_do_Retrabalho', 'N/A'),
-                    observacoes=row.get('observacoes') or row.get('Observacoes', '--')
-                )
-                db.session.add(novo_item)
-                existing_serials.add(serial_number) # Adiciona à verificação para duplicados dentro do mesmo ficheiro
-                novos_itens_count += 1
-
-            if novos_itens_count > 0:
-                db.session.commit() # Salva todos os novos itens no DB de uma só vez
-                flash(f'{novos_itens_count} novos itens foram importados com sucesso!', 'success')
-            else:
-                flash('Nenhum item novo foi importado. Verifique os Serial Numbers no seu ficheiro.', 'info')
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Ocorreu um erro ao processar o ficheiro: {e}', 'danger')
-        
-        return redirect(url_for('admin.lista_lotes_admin'))
-
-    else:
+    if not file or not file.filename.endswith('.csv'):
         flash('Formato de ficheiro inválido. Por favor, envie um ficheiro .csv.', 'danger')
         return redirect(url_for('admin.lista_lotes_admin'))
-# --- FIM DA REATORAÇÃO ---
 
+    try:
+        existing_serials = {p.serial_number for p in PCI.query.all()}
+        stream = io.StringIO(file.stream.read().decode("UTF-8"), newline=None)
+        csv_reader = csv.DictReader(stream)
+        
+        novos_itens = []
+        for row in csv_reader:
+            serial_number = row.get('serial_number') or row.get('Serial_Number')
+            if not serial_number or serial_number in existing_serials:
+                flash(f'Item com Serial Number "{serial_number}" foi ignorado (em branco ou duplicado).', 'warning')
+                continue
+            
+            data_str = row.get('data_de_montagem') or row.get('Data_de_Montagem')
+            data_montagem = None
+            if data_str:
+                for fmt in ('%Y-%m-%d', '%d/%m/%Y', '%d-%m-%Y'):
+                    try:
+                        data_montagem = datetime.strptime(data_str, fmt).date()
+                        break
+                    except ValueError:
+                        pass
+            
+            novo_item = PCI(
+                lote_id=row.get('lote_id') or row.get('Lote_ID'),
+                serial_number=serial_number,
+                data_de_montagem=data_montagem,
+                resultado_do_teste=row.get('resultado_do_teste') or row.get('Resultado_do_Teste'),
+                tecnico_do_teste=row.get('tecnico_do_teste') or row.get('tecnico_do_teste'),
+                retrabalho=row.get('retrabalho') or row.get('Retrabalho', 'Não'),
+                tecnico_do_retrabalho=row.get('tecnico_do_retrabalho') or row.get('Tecnico_do_Retrabalho', 'N/A'),
+                observacoes=row.get('observacoes') or row.get('Observacoes', '--')
+            )
+            novos_itens.append(novo_item)
+            existing_serials.add(serial_number)
 
-# As rotas de Editar e Apagar ainda usam a lógica antiga e serão as próximas a serem refatoradas
+        if novos_itens:
+            db.session.add_all(novos_itens)
+            db.session.commit()
+            flash(f'{len(novos_itens)} novos itens foram importados com sucesso!', 'success')
+        else:
+            flash('Nenhum item novo foi importado.', 'info')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ocorreu um erro ao processar o ficheiro: {e}', 'danger')
+    
+    return redirect(url_for('admin.lista_lotes_admin'))
+
+# --- ROTAS DE ATUALIZAÇÃO (Update) ---
 @admin_route.route('/<int:serial_id>/edit-form')
 @login_required
 @admin_required
 def obter_pci_form(serial_id):
-    # Busca o item no banco de dados pelo seu ID, ou retorna erro 404 se não encontrar
     item_para_editar = PCI.query.get_or_404(serial_id)
-    # Renderiza o formulário, passando o objeto do item encontrado
     return render_template('_edit_form.html', pci_dados=item_para_editar, pci_id=serial_id)
 
 @admin_route.route('/<int:serial_id>/edit', methods=['PUT'])
 @login_required
 @admin_required
 def editar_pci(serial_id):
-    # Busca o item que queremos atualizar
     item_para_atualizar = PCI.query.get_or_404(serial_id)
-    # Pega os dados JSON enviados pelo formulário
     data = request.get_json()
 
-    # --- INÍCIO DA CORREÇÃO ---
-    # Lógica antiga e incorreta foi removida.
-    # item_para_atualizar.resultado_do_teste = data.get('resultado_do_teste')
-    # ...
+    if data.get('resultado_do_teste') == 'Reprovada':
+        if not data.get('retrabalho') or not data.get('tecnico_do_retrabalho'):
+            return jsonify({'success': False, 'message': 'Para itens reprovados, "Retrabalho" e "Técnico" são obrigatórios.'}), 400
 
-    # Nova lógica: Itera sobre os dados recebidos e atualiza apenas os campos correspondentes.
-    # Isto garante que apenas os campos enviados pelo formulário serão alterados.
     for key, value in data.items():
-        # setattr() é uma forma segura de definir um atributo num objeto dinamicamente.
-        # ex: setattr(item_para_atualizar, 'retrabalho', 'novo texto')
         if hasattr(item_para_atualizar, key):
             setattr(item_para_atualizar, key, value)
-    # --- FIM DA CORREÇÃO ---
-
     try:
-        # Salva as alterações no banco de dados
         db.session.commit()
         return jsonify({'success': True, 'message': 'Item atualizado com sucesso'}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Erro ao atualizar: {e}'}), 500
 
-
+# --- ROTA DE APAGAR (Delete) ---
 @admin_route.route('/<int:serial_id>/delete', methods=['DELETE'])
 @login_required
 @admin_required
 def deletar_pci(serial_id):
-    # (Esta função já está correta da nossa última modificação)
-    item_para_apagar = PCI.query.get(serial_id)
-    if item_para_apagar:
+    item_para_apagar = PCI.query.get_or_404(serial_id)
+    try:
         db.session.delete(item_para_apagar)
         db.session.commit()
         return jsonify({'success': True}), 200
-    return jsonify({'success': False, 'message': 'Item não encontrado.'}), 404
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': str(e)}), 500
